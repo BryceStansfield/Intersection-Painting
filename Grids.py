@@ -1,8 +1,11 @@
 # Grids.py contains a set of functions which generate grids of curved polgons covering the set [0,1]^2
+from Common import FakePolygon, FakePolygonCollection
 from bezier import Curve
 import numpy as np
 
-def pixel_grid(num_x, num_y, grid_size) -> list[list[Curve]]:
+from Common import FakePolygonCollection
+
+def pixel_grid(num_x, num_y, grid_size) -> list[FakePolygonCollection]:
     polygons = []
     for x in range(num_x):
         for y in range(num_y):
@@ -12,35 +15,35 @@ def pixel_grid(num_x, num_y, grid_size) -> list[list[Curve]]:
             start_y = (y*grid_size[1])/num_y
             end_y = ((y+1)*grid_size[1])/num_y
 
-            polygons.append([
+            polygons.append(FakePolygonCollection([FakePolygon([
                 Curve(np.asfortranarray([[start_x, start_x], [start_y, end_y]]), degree=1),
                 Curve(np.asfortranarray([[start_x, end_x], [end_y, end_y]]), degree=1),
                 Curve(np.asfortranarray([[end_x, end_x], [end_y, start_y]]), degree=1),
                 Curve(np.asfortranarray([[end_x, start_x], [start_y, start_y]]), degree=1)
-                ]
+                ])])
             )
 
     return polygons
 
-def sierpinski_triangle(num_iterations, square_size) -> list[list[Curve]]:
-    triangle_segments = []
+def sierpinski_triangle(num_iterations, square_size) -> list[FakePolygonCollection]:
+    triangles = []
     
     # First let's add the "gaps"
     # The left and right gaps are special and should be dealt with seperately
-    triangle_segments.append([  # Left
+    triangles.append(FakePolygonCollection([FakePolygon([  # Left
         Curve(np.asfortranarray([[0.0, square_size/2], [square_size, square_size]]), degree=1),
         Curve(np.asfortranarray([[square_size/2, 0.0], [square_size, 0.0]]), degree=1),
         Curve(np.asfortranarray([[0.0, 0.0], [0.0, square_size]]), degree=1)
-    ])
-    triangle_segments.append([  # Right
+    ])]))
+    triangles.append(FakePolygonCollection([FakePolygon([  # Right
         Curve(np.asfortranarray([[square_size, square_size/2], [square_size, square_size]]), degree=1),
         Curve(np.asfortranarray([[square_size/2, square_size], [square_size, 0.0]]), degree=1),
         Curve(np.asfortranarray([[square_size, square_size], [0.0, square_size]]), degree=1)
-    ])
+    ])]))
 
     # Now let's create the upside down triangle shaped gaps
     def add_triangle_gap(bottom_left, square_size):
-        triangle_segments.append([
+        triangles.append(FakePolygonCollection([FakePolygon([
             Curve(np.asfortranarray([
                 [bottom_left[0]+(1/4)*square_size, bottom_left[0]+(3/4)*square_size],
                 [bottom_left[1]+(1/2)*square_size, bottom_left[1]+(1/2)*square_size]
@@ -53,7 +56,7 @@ def sierpinski_triangle(num_iterations, square_size) -> list[list[Curve]]:
                 [bottom_left[0]+(1/2)*square_size, bottom_left[0]+(1/4)*square_size],
                 [bottom_left[1], bottom_left[1]+(1/2)*square_size]
             ]), degree=1),
-        ])
+        ])]))
 
     def subdivide_square(bottom_left, square_size):
         """Returns the bottom lefts of the next three squares"""
@@ -96,13 +99,10 @@ def sierpinski_triangle(num_iterations, square_size) -> list[list[Curve]]:
         cur_square_size = cur_square_size * 2
         non_gap_curves = duplicate(non_gap_curves, cur_square_size)
 
-    triangle_segments = triangle_segments + [[
+    triangles = triangles + [FakePolygonCollection([FakePolygon([
         Curve(np.asfortranarray([[c[0][0], c[0][1]], [c[1][0], c[1][1]]]), degree=1),
         Curve(np.asfortranarray([[c[0][1], c[0][2]], [c[1][1], c[1][2]]]), degree=1),
         Curve(np.asfortranarray([[c[0][2], c[0][0]], [c[1][2], c[1][0]]]), degree=1),
-        ] for c in non_gap_curves]
+        ])]) for c in non_gap_curves]
 
-    return triangle_segments
-
-
-    
+    return triangles    
