@@ -1,7 +1,9 @@
 from bezier import Curve
 import Curves
+import Common
+import math
 
-def ball_bounce(ball_radius, ball_start, start_velocity, gravity, drag, bounce_ratio, frames) -> list[list[Curve]]:
+def ball_bounce(ball_radius, ball_start, start_velocity, gravity, drag, bounce_ratio, frames) -> list[list[Common.Collider]]:
     """List of curves corrosponding to a ball with radius `ball_radius` starting at position `ball_start` with velocity `start_velocity`
     drag factor `drag` and gravity factor `gravity` bouncing for `frames` frames"""
     cur_pos = (ball_start[0], ball_start[1],)
@@ -27,32 +29,40 @@ def ball_bounce(ball_radius, ball_start, start_velocity, gravity, drag, bounce_r
         # Updating x'
         velocity = ((1-drag)*velocity[0], (1-drag)*velocity[1] - gravity,)
 
-    return [Curves.approximate_circle(centre, ball_radius) for centre in ball_centres]
+    return [[Common.Collider(Curves.approximate_circle(centre, ball_radius))] for centre in ball_centres]
         
 
-def pulsating_circles(frame_size, start_position, delta_radius, start_radius, frames_per_circle, num_frames) -> list[list[Curve]]:
-    """num_frames-Animation of pulsating circles from the centre of the frame (of size frame_size = (x,y,)), one new circle every `frames_per_circle` with start radius start_radius"""
+def pulsating_circles(frame_size, start_position, delta_radius, start_radius, frames_per_circle, num_frames, colours = [(0,0,0,)], patterns=[Curves.approximate_circle]) -> list[list[Common.Collider]]:
+    """num_frames-Animation of pulsating circles from the centre of the frame (of size frame_size = (x,y,)), one new circle every `frames_per_circle` with start radius start_radius.
+       Cycles through `colours`"""
     frames = []
     cur_circles = []
+    cur_circles_indicies = []
     
     circle_ttl = 1
+    next_circle_i = 0
+
+    end_radius = max(*[math.dist(start_position, (x, y)) for x in (0, frame_size[0]) for y in (0, frame_size[1])]) + 0.1
 
     for _ in range(num_frames):
         # Expanding existing circles
         cur_circles = [c + delta_radius for c in cur_circles]
-        while len(cur_circles) > 0 and cur_circles[0] > max(max(frame_size[0]-start_position[0], start_position[0]), max(frame_size[1]-start_position[1], start_position[1]))/2:
+        while len(cur_circles) > 0 and cur_circles[0] > end_radius:
             cur_circles.pop(0)   # Almost certainly inefficient, but it shouldn't matter too much
+            cur_circles_indicies.pop(0)
 
         # New circles
         circle_ttl -= 1
         if circle_ttl == 0:
             cur_circles.append(start_radius)
+            cur_circles_indicies.append(next_circle_i)
+            next_circle_i += 1
             circle_ttl = frames_per_circle
 
         # Render circles
-        frames.append(sum([Curves.approximate_circle(start_position, c) for c in cur_circles], start=[]))
+        frames.append([Common.Collider(patterns[cur_circles_indicies[i] % len(patterns)](start_position, c), colour=colours[cur_circles_indicies[i] % len(colours)]) for i, c in enumerate(cur_circles)])
     
     return frames
 
-def combine_animations(*anims) -> list[list[Curve]]:
+def combine_animations(*anims) -> list[list[Common.Collider]]:
     return [sum(curve_sets, start=[]) for curve_sets in zip(*anims)]

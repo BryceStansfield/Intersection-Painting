@@ -23,3 +23,9 @@ class FakePolygonCollection:
                 return True
 
         return False
+
+class Collider:
+    """A class representing a list of curves that collides with a grid"""
+    def __init__(self, curves: list[Curve], colour = (0,0,0,)):
+        self.curves = curves
+        self.colour = colour
