@@ -3,4 +3,4 @@ A python-based animation tool, that repaints line drawings according to their in
 
 ## Examples
 Rainbow cat sierpinski triangle (WARNING: Flashing images):
-![](Examples/cat_movie.mp4)
+![](https://www.youtube.com/shorts/OpIpnvVSaUM)
